@@ -77,65 +77,73 @@ export class BookedService {
 
             const seats = await BookedSeat.aggregate(
                 [
-                    {
-                        $match: {
-                            busId: new mongoose.Types.ObjectId("669f8398b9306a3b1bd9b51e")
-                        }
-                    },
-                    {
-                        $lookup: {
-                            from: "buses",
-                            localField: "busId",
-                            foreignField: "_id",
-                            as: "busresult"
-                        }
-                    },
-                    { $unwind: "$busresult" },
-                    {
-                        $project: {
-                            bookedBusroute: "$busresult.route",
-                            seatNumber: 1,
-                            departure: 1,
-                            departureTime: 1,
-                            destination: 1,
-                            payment: 1,
-                            seat: 1,
-                            isSingleLady: 1,
-                            bookingDate: 1,
-                            userId: 1,
-                            busId: 1
-                        }
-                    },
-                    {
-                        $set: {
-                            startIndex: {
-                                $indexOfArray: [
-                                    "$bookedBusroute.previousStation",
-                                    "$departure"
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        $set: {
-                            endIndex: {
-                                $indexOfArray: [
-                                    "$bookedBusroute.currentStation",
-                                    "$destination"
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        $set: {
-                            route: {
-                                $slice: [
-                                    0, 2
-                                ]
-                            }
-                        }
-                    }
-                ]
+  {
+    $match: {
+      busId: ObjectId("669f8398b9306a3b1bd9b51e")
+    }
+  },
+  {
+    $lookup: {
+      from: "buses",
+      localField: "busId",
+      foreignField: "_id",
+      as: "busresult"
+    }
+  },
+  { $unwind: "$busresult" },
+  {
+    $project: {
+      bookedBusroute: "$busresult.route",
+      seatNumber: 1,
+      departure: 1,
+      departureTime: 1,
+      destination: 1,
+      payment: 1,
+      seat: 1,
+      isSingleLady: 1,
+      bookingDate: 1,
+      userId: 1,
+      busId: 1
+    }
+  },
+  {
+    $set: {
+      startIndex: {
+        $indexOfArray: [
+          "$bookedBusroute.previousStation",
+          "$departure"
+        ]
+      }
+    }
+  },
+  {
+    $set: {
+      endIndex: {
+        $add: [
+          {
+            $indexOfArray: [
+              "$bookedBusroute.currentStation",
+              "$destination"
+            ]
+          },
+          1
+        ]
+      }
+    }
+  },
+  {
+    $set: {
+      route: {
+        $slice: [
+          "$bookedBusroute",
+          "$startIndex",
+          "$endIndex"
+        ]
+      }
+    }
+  }
+]
+
             )
 
             for (let i = 0; i < bookedRoute.length; i++) {
