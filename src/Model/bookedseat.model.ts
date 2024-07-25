@@ -23,10 +23,10 @@ const bookedSeatSchema = new mongoose.Schema({
         type : Boolean,
         default : false
     },
-    seat : {
+    seat : [{
         type : Number,
         required : [true , errMSG.REQUIRED('Seat number')]
-    },
+    }] ,
     destination :{
         type : String,
         required : [true , errMSG.REQUIRED('Bus destination')],

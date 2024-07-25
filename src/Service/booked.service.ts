@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import BookedSeat from "../Model/bookedseat.model";
 import { IbookedSeat } from "../Interface/ibookedSeat.interface";
 import { Ifilter } from "../Interface/ifilter.interface";
-import Bus from "../Model/bus.model";
 
 @injectable()
 export class BookedService {
@@ -16,6 +15,9 @@ export class BookedService {
     async booking(SeatDataData: IbookedSeat, userId: string) {
         try {
 
+            if (!SeatDataData.isSingleLady) {
+                SeatDataData.isSingleLady = false;
+            }
 
             const result = await BookedSeat.create({
                 seatNumber: SeatDataData.seatNumber,
@@ -49,136 +51,115 @@ export class BookedService {
 
     async availableSeat(filter: Ifilter, id: string) {
         try {
-
-            const busRoute = await Bus.aggregate([
-                {
-                    $match: {
-                        _id: new mongoose.Types.ObjectId(id)
-                    }
-                },
-                {
-                    $project: {
-                        route: 1,
-                        _id: 0
-                    }
-                }
-            ]);
-
-
-            let startIndex = busRoute[0].route.findIndex((item: any) => item.previousStation === filter.departure);
-            let endIndex = busRoute[0].route.findIndex((item: any) => item.currentStation === filter.destination) + 1;
-
-            const bookedRoute = busRoute[0].route.slice(startIndex, endIndex);
-
-            console.log(bookedRoute);
-
-
-            let bookedseats: any = []
-
             const seats = await BookedSeat.aggregate(
                 [
-  {
-    $match: {
-      busId: ObjectId("669f8398b9306a3b1bd9b51e")
-    }
-  },
-  {
-    $lookup: {
-      from: "buses",
-      localField: "busId",
-      foreignField: "_id",
-      as: "busresult"
-    }
-  },
-  { $unwind: "$busresult" },
-  {
-    $project: {
-      bookedBusroute: "$busresult.route",
-      seatNumber: 1,
-      departure: 1,
-      departureTime: 1,
-      destination: 1,
-      payment: 1,
-      seat: 1,
-      isSingleLady: 1,
-      bookingDate: 1,
-      userId: 1,
-      busId: 1
-    }
-  },
-  {
-    $set: {
-      startIndex: {
-        $indexOfArray: [
-          "$bookedBusroute.previousStation",
-          "$departure"
-        ]
-      }
-    }
-  },
-  {
-    $set: {
-      endIndex: {
-        $add: [
-          {
-            $indexOfArray: [
-              "$bookedBusroute.currentStation",
-              "$destination"
-            ]
-          },
-          1
-        ]
-      }
-    }
-  },
-  {
-    $set: {
-      route: {
-        $slice: [
-          "$bookedBusroute",
-          "$startIndex",
-          "$endIndex"
-        ]
-      }
-    }
-  }
-]
-
-            )
-
-            for (let i = 0; i < bookedRoute.length; i++) {
-
-                const seat = await BookedSeat.aggregate([
                     {
-                        $match: {
-                            busId: new mongoose.Types.ObjectId(id),
-                            $or: [
-                                { departure: bookedRoute[i].previousStation }, { destination: bookedRoute[i].currentStation },
-
-
-                            ]
+                        '$match': {
+                            'busId': new mongoose.Types.ObjectId(id),
+                            // 'bookingDate' : new Date(filter.date)
+                        }
+                    }, {
+                        '$lookup': {
+                            'from': 'buses',
+                            'localField': 'busId',
+                            'foreignField': '_id',
+                            'as': 'bus'
+                        }
+                    }, {
+                        '$unwind': '$bus'
+                    }, {
+                        '$addFields': {
+                            'wantedRouteStartIndex': {
+                                '$indexOfArray': [
+                                    '$bus.route.previousStation', filter.departure
+                                ]
+                            },
+                            'wantedRouteEndIndex': {
+                                '$add': [
+                                    {
+                                        '$indexOfArray': [
+                                            '$bus.route.currentStation', filter.destination
+                                        ]
+                                    }, 1
+                                ]
+                            }
+                        }
+                    }, {
+                        '$addFields': {
+                            'wantedRoute': {
+                                '$slice': [
+                                    '$bus.route', '$wantedRouteStartIndex', {
+                                        '$subtract': [
+                                            '$wantedRouteEndIndex', '$wantedRouteStartIndex'
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }, {
+                        '$project': {
+                            'route': '$bus.route',
+                            'seatNumber': 1,
+                            'departure': 1,
+                            'departureTime': 1,
+                            'destination': 1,
+                            'payment': 1,
+                            'seat': 1,
+                            'isSingleLady': 1,
+                            'bookingDate': 1,
+                            'userId': 1,
+                            'busId': 1,
+                            'wantedRoute': 1
+                        }
+                    }, {
+                        '$match': {
+                            '$expr': {
+                                '$setIntersection': [
+                                    {
+                                        '$map': {
+                                            'input': '$wantedRoute',
+                                            'as': 'wantRoute',
+                                            'in': {
+                                                '$arrayElemAt': [
+                                                    {
+                                                        '$filter': {
+                                                            'input': '$userRoute',
+                                                            'cond': {
+                                                                '$or': [
+                                                                    {
+                                                                        '$eq': [
+                                                                            '$$this.previousStation', '$$wantRoute.previousStation'
+                                                                        ]
+                                                                    }, {
+                                                                        '$eq': [
+                                                                            '$$this.currentStation', '$$wantRoute.currentStation'
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    }, 0
+                                                ]
+                                            }
+                                        }
+                                    }, '$wantedRoute'
+                                ]
+                            }
                         }
                     },
                     {
                         $project: {
                             seatNumber: 1,
-                            _id: 0
+                            _id: 0,
+                            isSingleLady : 1
                         }
                     }
                 ]);
-
-                for (const s of seat) {
-                    bookedseats.push(s);
-                }
-
-            }
-
-
             return {
                 statusCode: StatusCode.OK,
                 content: {
                     message: MSG.SUCCESS('Your seat is booked'),
-                    data: bookedseats
+                    data: seats
                 }
             };
         } catch (error) {
@@ -192,7 +173,4 @@ export class BookedService {
             };
         }
     }
-
-
-
 }
