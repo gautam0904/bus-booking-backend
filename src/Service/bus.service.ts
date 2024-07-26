@@ -26,14 +26,57 @@ export class BusService {
                 throw new ApiError(StatusCode.CONFLICT, errMSG.EXSISTBUS)
             }
 
+            const newRoute = [];  
+            const speed = 60;  
+            
+            function convertTimeToDate(timeString: string, baseDate: Date): Date {
+                const [hours, minutes] = timeString.split(':').map(Number);
+                const date = new Date(baseDate);
+                date.setHours(hours, minutes, 0, 0);
+                return date;
+            }
+            
+            function calculateTravelTime(distance: number, speed: number): number {
+                return (distance / speed) * 3600 * 1000; 
+            }
+            
+            const baseDate = new Date();
+            
+            let currentArrivalTime = convertTimeToDate(BusData.departureTime, baseDate);
+            
+            for (let i = 0; i < BusData.route.length; i++) {
+                let tempRoute = {
+                    previousStation: '',
+                    currentStation: '',
+                    distance: 0,
+                    arrivalTime: ''
+                };
+            
+                const travelTime = calculateTravelTime(BusData.route[i].distance, speed);
+                
+                currentArrivalTime = new Date(currentArrivalTime.getTime() + travelTime);
+            
+                
+                const hours = currentArrivalTime.getHours().toString().padStart(2, '0');
+                const minutes = currentArrivalTime.getMinutes().toString().padStart(2, '0');
+                tempRoute.arrivalTime = `${hours}:${minutes}`;
+            
+                tempRoute.previousStation = BusData.route[i].previousStation;
+                tempRoute.currentStation = BusData.route[i].currentStation;
+                tempRoute.distance = BusData.route[i].distance;
+            
+                newRoute.push(tempRoute);
+            }
+            
+
             const result = await Bus.create({
-                busNumber : BusData.busNumber,
+                busNumber: BusData.busNumber,
                 departure: BusData.departure,
                 departureTime: BusData.departureTime,
                 destination: BusData.destination,
                 TotalSeat: BusData.TotalSeat,
                 charge: BusData.charge,
-                route:BusData.route
+                route: newRoute
             });
             return {
                 statusCode: StatusCode.OK,
@@ -64,12 +107,12 @@ export class BusService {
             const existBus = await Bus.findOne({ _id: BusId });
 
             if (!existBus) {
-                throw new ApiError(StatusCode.NOCONTENT , errMSG.NOTFOUND('bus'))
+                throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('bus'))
             }
-      
+
             const deletedBus = await Bus.findOneAndDelete({ _id: BusId }, opts);
 
-            await BookedSeat.deleteMany({busId : BusId})
+            await BookedSeat.deleteMany({ busId: BusId })
 
             await session.commitTransaction();
 
@@ -109,7 +152,7 @@ export class BusService {
             return {
                 statuscode: error.statusCode || StatusCode.NOTIMPLEMENTED,
                 content: { message: error.message || errMSG.DEFAULTERRORMSG, },
-                
+
             }
         }
     }
@@ -130,45 +173,45 @@ export class BusService {
             return {
                 statuscode: error.statusCode || StatusCode.NOTIMPLEMENTED,
                 content: { message: error.message || errMSG.DEFAULTERRORMSG, },
-                
+
             }
         }
     }
 
     async getFilteredBus(filter: Ifilter | null = null) {
-        try {    
+        try {
             const Buss = await Bus.aggregate([
                 {
-                  $match: {
-                    route: {
-                      $elemMatch: {
-                        previousStation: filter?.departure
-                      }
+                    $match: {
+                        route: {
+                            $elemMatch: {
+                                previousStation: filter?.departure
+                            }
+                        }
                     }
-                  }
                 },
                 {
-                  $set: {
-                    startIndex: { $indexOfArray: [ "$route.previousStation", filter?.departure ] }
-                  }
-                },
-                {
-                  $set: {
-                    route: { $slice: [ "$route", "$startIndex", { $size: "$route" } ] }
-                  }
-                },
-                {
-                  $match: {
-                    route: {
-                      $elemMatch: {
-                        currentStation: filter?.destination
-                      }
+                    $set: {
+                        startIndex: { $indexOfArray: ["$route.previousStation", filter?.departure] }
                     }
-                  }
+                },
+                {
+                    $set: {
+                        route: { $slice: ["$route", "$startIndex", { $size: "$route" }] }
+                    }
+                },
+                {
+                    $match: {
+                        route: {
+                            $elemMatch: {
+                                currentStation: filter?.destination
+                            }
+                        }
+                    }
                 }
-              ])
+            ])
 
-            if (Buss.length ==0 ) {
+            if (Buss.length == 0) {
                 throw new ApiError(StatusCode.NOTFOUND, `${errMSG.NOTFOUND('Bus')}`);
             }
             return {
@@ -195,14 +238,14 @@ export class BusService {
                 },
                 {
                     $set: {
-                        busNumber : updateData.busNumber,
+                        busNumber: updateData.busNumber,
                         departure: updateData.departure,
-                        iscancel : updateData.iscancel,
+                        iscancel: updateData.iscancel,
                         departureTime: updateData.departureTime,
                         destination: updateData.destination,
                         TotalSeat: updateData.TotalSeat,
                         charge: updateData.charge,
-                        route:updateData.route
+                        route: updateData.route
                     },
                 },
                 { new: true }

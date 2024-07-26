@@ -9,4 +9,10 @@ export interface IbookedSeat{
     bookingDate : Date;
     userId : string;
     busId : string;
+    mobileNo : string
+    passenger : [{
+        name : string;
+        age : number;
+        gender : string
+    }]
  }

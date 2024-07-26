@@ -4,7 +4,7 @@ import { errMSG } from "../Constant/message";
 
 const bookedSeatSchema = new mongoose.Schema({
     seatNumber : {
-        type : Number,
+        type : [Number],
         required : [true , errMSG.REQUIRED('Seat number')],
     },
     departure :{
@@ -23,14 +23,30 @@ const bookedSeatSchema = new mongoose.Schema({
         type : Boolean,
         default : false
     },
-    seat : [{
-        type : Number,
-        required : [true , errMSG.REQUIRED('Seat number')]
-    }] ,
     destination :{
         type : String,
         required : [true , errMSG.REQUIRED('Bus destination')],
     },
+    mobileNo : {
+        type : String,
+        required : [true , errMSG.REQUIRED('Mobile number')],
+        unique : true,
+        match : /^\d{10}$/
+    },
+    passenger: [{
+        name : {
+            type : String,
+            required : [true , errMSG.REQUIRED('Seat user name')]
+        },
+        age : {
+            type : Number,
+            required : [true , errMSG.REQUIRED('Seat user age')]
+        },
+        gender : {
+            type : String,
+            required : [true , errMSG.REQUIRED('Seat user gender')]
+        }
+    }],
     payment : {
         type : Number,
         required : [true , errMSG.REQUIRED('Bus charge')]

@@ -12,24 +12,28 @@ export class BookedService {
     constructor() {
     }
 
-    async booking(SeatDataData: IbookedSeat, userId: string) {
+    async booking(SeatData: IbookedSeat, userId: string) {
+        console.log(SeatData);
+        
         try {
 
-            if (!SeatDataData.isSingleLady) {
-                SeatDataData.isSingleLady = false;
+            if (!SeatData.isSingleLady) {
+                SeatData.isSingleLady = false;
             }
 
             const result = await BookedSeat.create({
-                seatNumber: SeatDataData.seatNumber,
-                departure: SeatDataData.departure,
-                destination: SeatDataData.destination,
-                departureTime: SeatDataData.departureTime,
-                payment: SeatDataData.payment,
-                seat: SeatDataData.seat,
-                isSingleLady: SeatDataData.isSingleLady,
-                bookingDate: SeatDataData.bookingDate,
+                seatNumber: SeatData.seatNumber,
+                departure: SeatData.departure,
+                destination: SeatData.destination,
+                departureTime: SeatData.departureTime,
+                payment: SeatData.payment,
+                seat: SeatData.seat,
+                isSingleLady: SeatData.isSingleLady,
+                passenger : SeatData.passenger,
+                bookingDate: SeatData.bookingDate,
+                mobileNo : SeatData.mobileNo,
                 userId: userId,
-                busId: SeatDataData.busId
+                busId: SeatData.busId
             });
             return {
                 statusCode: StatusCode.OK,
@@ -56,7 +60,7 @@ export class BookedService {
                     {
                         '$match': {
                             'busId': new mongoose.Types.ObjectId(id),
-                            // 'bookingDate' : new Date(filter.date)
+                            'bookingDate' : new Date(filter.date)
                         }
                     }, {
                         '$lookup': {

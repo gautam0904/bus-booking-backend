@@ -43,7 +43,11 @@ const busSchema = new mongoose.Schema({
         distance :{
             type : Number,
             required : [true , errMSG.REQUIRED('Distance')]
-        }
+        },
+        arrivalTime :{
+            type : String,
+            required : [true , errMSG.REQUIRED('Bus departure')],
+        },
     }]
 },{timestamps : true});
 
