@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export interface IBus{
    _id ?: string;
    busNumber : string;
@@ -7,10 +9,9 @@ export interface IBus{
    iscancel : boolean;
    TotalSeat : number;
    charge : number;
-   route :[{
-    previousStation : string;
-    currentStation : string;
+   route : mongoose.Types.ObjectId;
+   stops : [{
+    station : string;
     distance : number;
-    arrivalTime : string;
    }]
 }

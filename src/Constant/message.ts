@@ -21,6 +21,7 @@ export const errMSG = {
     USERNOTFOUND: 'There is no user',
     NOTFOUND: (field : string) => { return `${field} is not found in our data` },
     CREATEERR: (field : string) => { return `${field} is not created` },
+    EXSIT : (field : string) => { return `${field} is already exists` },
     UPDATEUSER: 'User is not updated',
     USEROWNDELETE : 'You can not delete your self',
     USEROWNUPDATE : 'You can not update your self',

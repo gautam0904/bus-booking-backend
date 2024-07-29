@@ -1,5 +1,3 @@
-import { BookedService } from './Service/booked.service';
-import { BookController } from './Controller/booked.controller';
 import { Container } from 'inversify';
 import { Types } from './Types/types';
 import * as service from './Service';
@@ -8,20 +6,22 @@ import { Auth } from './Middleware/auth.middleware';
 import { Role } from './Middleware/role.middleware';
 
 const container = new Container();
+// Bind controllers
 
-// controlle
+for (const i in controller) {
+    const Controller = (controller as { [key: string]: any })[i];
+    container.bind<typeof Controller>(Types[Controller.name as keyof typeof Types]).to(Controller);
+}
 
-container.bind<controller.UserController>(Types.UserController).to(controller.UserController);
-container.bind<controller.BusController>(Types.BusController).to(controller.BusController);
-container.bind<controller.BookController>(Types.BookedController).to(controller.BookController);
+// Bind services
 
-// services 
-container.bind<service.UserService>(Types.UserService).to(service.UserService);
-container.bind<service.BusService>(Types.BusService).to(service.BusService);
-container.bind<service.BookedService>(Types.BookedService).to(service.BookedService);
+for (const i in service) {
+    const Service = (service as { [key: string]: any})[i];
+    container.bind<typeof Service>(Types[Service.name as keyof typeof Types]).to(Service);
+}
 
-//middleware
-container.bind<Auth>(Types.Auth).to(Auth)
-container.bind<Role>(Types.Role).to(Role)
+// Bind middleware
+container.bind<Auth>(Types.Auth).to(Auth);
+container.bind<Role>(Types.Role).to(Role);
 
 export default container;

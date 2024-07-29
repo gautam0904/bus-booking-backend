@@ -56,9 +56,14 @@ export class UserController {
   async validToken(req: Request, res: Response) {
     try {
       const token = req.body
+      const valid_token = await this.userService.validToken(token);
+      if (!valid_token) {
+        throw new ApiError(StatusCode.UNAUTHORIZED, errMSG.DEFAULTERRORMSG);
+      }
+      res.status(valid_token.statuscode).json(valid_token.content);
 
     } catch (error) {
-      
+      res.status(error.statuscode || StatusCode.NOTIMPLEMENTED).json(error.message || errMSG.INTERNALSERVERERRORRESULT)
     }
   }
 
@@ -87,9 +92,7 @@ export class UserController {
       const updateData: Iuser = req.body as Iuser;
       updateData._id = req.headers.USERID as string;
 
-      const userId = req.headers.USERID as string;
-
-      const updated_user = await this.userService.updateUser(updateData , userId);
+      const updated_user = await this.userService.updateUser(updateData );
 
       res.status(updated_user.statuscode).json(updated_user.Content);
     } catch (error) {

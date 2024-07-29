@@ -31,23 +31,21 @@ const busSchema = new mongoose.Schema({
         type : Date,
         default : null,
     },
-    route : [{
-        previousStation :{
-            type : String,
-            required : [true , errMSG.REQUIRED('Previous station')]
+    route :{
+        type : mongoose.Types.ObjectId,
+        ref : 'Route',
+        required : [true , errMSG.REQUIRED('Route id')]
+    } ,
+    stops : [{
+        Station :{
+            type : mongoose.Types.ObjectId,
+            ref : 'Station',
+            required : [true , errMSG.REQUIRED('Station id')]
         },
-        currentStation :{
-            type : String,
-            required : [true , errMSG.REQUIRED('Current station')]
-        },
-        distance :{
+        distance : {
             type : Number,
             required : [true , errMSG.REQUIRED('Distance')]
-        },
-        arrivalTime :{
-            type : String,
-            required : [true , errMSG.REQUIRED('Bus departure')],
-        },
+        }
     }]
 },{timestamps : true});
 

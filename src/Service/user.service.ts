@@ -92,12 +92,44 @@ export class UserService {
         }
     }
 
+    async validToken(token : string){
+        try {
+           let user ;
+
+            jwt.verify(token , process.env.AccessTokenSeceret as string , async(err , decoded :any)=>{
+                if (err){
+                    throw new ApiError(StatusCode.UNAUTHORIZED , errMSG.EXPIREDTOKEN)
+                }
+                
+                user = await User.findById({_id : decoded.id})
+   
+            })
+
+ 
+            return {
+                statuscode: StatusCode.OK,
+                content: {
+                    message: MSG.SUCCESS('Token is valid'),
+                    data: user
+                }
+            }
+        } catch (error) {
+            return {
+                statuscode: error.statuscode || StatusCode.UNAUTHORIZED,
+                content: {
+                    message: error.message || errMSG.DEFAULTERRORMSG,
+                }
+            }
+        }
+    }
+
       async deleteUser(userId: string , userOwnId: string) {
         const session = await mongoose.startSession();
 
         session.startTransaction();
 
         try {
+            console.log(userId , userOwnId);
           const opts = { session };
 
 
@@ -106,7 +138,9 @@ export class UserService {
             throw new ApiError(StatusCode.NOTFOUND, errMSG.NOTEXISTUSER);
           }
 
-          if (userId === userOwnId) {
+          if (userId == userOwnId) {
+         
+            
             throw new ApiError(StatusCode.CONFLICT , errMSG.USEROWNDELETE)
           }
 
@@ -139,7 +173,13 @@ export class UserService {
             const user = await User.findById(userId)
             if (!user) throw new ApiError(StatusCode.NOCONTENT, errMSG.USERNOTFOUND)
 
-            return user
+            return {
+                statuscode: StatusCode.OK,
+                content: {
+                    message: MSG.SUCCESS('User get '),
+                    data: user
+                },
+            }
 
 
         } catch (error) {
@@ -190,17 +230,13 @@ export class UserService {
         }
     }
 
-     async updateUser(updateData: Iuser ,userOwnId: string ) {
+     async updateUser(updateData: Iuser  ) {
         try {
 
             const existUser = await User.findById(updateData._id);
 
             if (!existUser) {
                 throw new ApiError(StatusCode.NOTFOUND, errMSG.USERNOTFOUND);
-            }
-
-            if (userOwnId === updateData._id) {
-                throw new ApiError(StatusCode.CONFLICT , errMSG.USEROWNUPDATE)
             }
 
             const result = await User.findByIdAndUpdate(

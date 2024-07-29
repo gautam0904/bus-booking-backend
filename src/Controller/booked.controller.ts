@@ -13,7 +13,7 @@ import { IbookedSeat } from '../Interface/ibookedSeat.interface';
 
 @controller('/bus', new Auth().handler)
 
-export class BookController {
+export class BookedController {
   private bookingService: BookedService;
 
   constructor(@inject(Types.BookedService) bookServices: BookedService) {

@@ -26,48 +26,48 @@ export class BusService {
                 throw new ApiError(StatusCode.CONFLICT, errMSG.EXSISTBUS)
             }
 
-            const newRoute = [];  
-            const speed = 60;  
-            
-            function convertTimeToDate(timeString: string, baseDate: Date): Date {
-                const [hours, minutes] = timeString.split(':').map(Number);
-                const date = new Date(baseDate);
-                date.setHours(hours, minutes, 0, 0);
-                return date;
-            }
-            
-            function calculateTravelTime(distance: number, speed: number): number {
-                return (distance / speed) * 3600 * 1000; 
-            }
-            
-            const baseDate = new Date();
-            
-            let currentArrivalTime = convertTimeToDate(BusData.departureTime, baseDate);
-            
-            for (let i = 0; i < BusData.route.length; i++) {
-                let tempRoute = {
-                    previousStation: '',
-                    currentStation: '',
-                    distance: 0,
-                    arrivalTime: ''
-                };
-            
-                const travelTime = calculateTravelTime(BusData.route[i].distance, speed);
-                
-                currentArrivalTime = new Date(currentArrivalTime.getTime() + travelTime);
-            
-                
-                const hours = currentArrivalTime.getHours().toString().padStart(2, '0');
-                const minutes = currentArrivalTime.getMinutes().toString().padStart(2, '0');
-                tempRoute.arrivalTime = `${hours}:${minutes}`;
-            
-                tempRoute.previousStation = BusData.route[i].previousStation;
-                tempRoute.currentStation = BusData.route[i].currentStation;
-                tempRoute.distance = BusData.route[i].distance;
-            
-                newRoute.push(tempRoute);
-            }
-            
+            // const newRoute = [];
+            // const speed = 60;
+
+            // function convertTimeToDate(timeString: string, baseDate: Date): Date {
+            //     const [hours, minutes] = timeString.split(':').map(Number);
+            //     const date = new Date(baseDate);
+            //     date.setHours(hours, minutes, 0, 0);
+            //     return date;
+            // }
+
+            // function calculateTravelTime(distance: number, speed: number): number {
+            //     return (distance / speed) * 3600 * 1000;
+            // }
+
+            // const baseDate = new Date();
+
+            // let currentArrivalTime = convertTimeToDate(BusData.departureTime, baseDate);
+
+            // for (let i = 0; i < BusData.route.length; i++) {
+            //     let tempRoute = {
+            //         previousStation: '',
+            //         currentStation: '',
+            //         distance: 0,
+            //         arrivalTime: ''
+            //     };
+
+            //     const travelTime = calculateTravelTime(BusData.route[i].distance, speed);
+
+            //     currentArrivalTime = new Date(currentArrivalTime.getTime() + travelTime);
+
+
+            //     const hours = currentArrivalTime.getHours().toString().padStart(2, '0');
+            //     const minutes = currentArrivalTime.getMinutes().toString().padStart(2, '0');
+            //     tempRoute.arrivalTime = `${hours}:${minutes}`;
+
+            //     tempRoute.previousStation = BusData.route[i].previousStation;
+            //     tempRoute.currentStation = BusData.route[i].currentStation;
+            //     tempRoute.distance = BusData.route[i].distance;
+
+            //     newRoute.push(tempRoute);
+            // }
+
 
             const result = await Bus.create({
                 busNumber: BusData.busNumber,
@@ -76,7 +76,7 @@ export class BusService {
                 destination: BusData.destination,
                 TotalSeat: BusData.TotalSeat,
                 charge: BusData.charge,
-                route: newRoute
+                route: BusData.route
             });
             return {
                 statusCode: StatusCode.OK,
@@ -234,7 +234,7 @@ export class BusService {
 
             const result = await Bus.findByIdAndUpdate(
                 {
-                    _id: updateData._id,
+                    _id: new mongoose.Types.ObjectId(updateData._id),
                 },
                 {
                     $set: {
@@ -250,13 +250,13 @@ export class BusService {
                 },
                 { new: true }
             );
-            if (result) {
-                return {
-                    statuscode: StatusCode.OK,
-                    Content: result,
-                };
+            if (!result) {
+                throw new ApiError(StatusCode.NOTIMPLEMENTED, errMSG.UPDATEBUS);
             }
-            throw new ApiError(StatusCode.NOTIMPLEMENTED, errMSG.UPDATEBUS);
+            return {
+                statuscode: StatusCode.OK,
+                Content: result,
+            };
         } catch (error) {
             return {
                 statuscode: error.statusCode || StatusCode.NOTIMPLEMENTED,

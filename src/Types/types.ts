@@ -11,7 +11,16 @@ export const Types = {
 	BookedService: Symbol.for('BookedService'),
 	BookedController: Symbol.for('BookedController'),
 
+	// route
+	RouteService : Symbol.for('RouteService'),
+	RouteController : Symbol.for('RouteController'),
+
+	// station
+	StationService : Symbol.for('StationService'),
+	StationController : Symbol.for('StationController'),
+
 	//middleware
 	Auth: Symbol.for('Auth'),
 	Role: Symbol.for('Role')
 }
+
