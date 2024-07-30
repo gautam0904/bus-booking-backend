@@ -6,6 +6,7 @@ import { StatusCode } from "../Constant/statuscode";
 import { errMSG, MSG } from "../Constant/message";
 import mongoose from "mongoose";
 import Bus from "../Model/bus.model";
+import Segment from "../Model/segment.model";
 
 @injectable()
 export class RouteService {
@@ -25,6 +26,7 @@ export class RouteService {
                 routename: RouteData.routeName,
                 stations: RouteData.stations,
             });
+            await this.generateSegments(result._id.toString());
             return {
                 statusCode: StatusCode.OK,
                 content: {
@@ -42,6 +44,58 @@ export class RouteService {
             }
         }
     }
+
+       async generateSegments (routeId : string)  {
+        try {
+
+            const route = await Route.findById(routeId).populate('stations.station').exec();
+            
+            if (!route) {
+                throw new ApiError(StatusCode.NOTFOUND , 'Route not found');
+            }
+            
+            route.stations.sort((a, b) => a.order - b.order);
+            
+            const segments = [];
+  
+            for (let i = 0; i < route.stations.length; i++) {
+                for (let j = i + 1; j < route.stations.length; j++) {
+                    const startStation = route.stations[i];
+                    const endStation = route.stations[j];
+                    
+                    const segment = {
+                        routeId  : new mongoose.Types.ObjectId(routeId),
+                        fromStation: startStation.station,
+                        toStation: endStation.station,
+                        distance: endStation.distanceFromStart - startStation.distanceFromStart
+                    };
+                    
+                    segments.push(segment);
+                }
+            }
+            
+            const segmentPromises = segments.map(async (s) => {
+                
+               
+                const rs = await Segment.create({
+                    fromStation : s.fromStation,
+                    toStation : s.toStation,
+                    distance : s.distance
+                })
+                return rs
+            });
+    
+            await Promise.all(segmentPromises);
+
+            console.log('Generated segments:', segments);
+            return segments;
+        } catch (err) {
+            return err;
+        }
+    };
+    
+
+    
     
       async deleteRoute(RouteId: string ) {
         const session = await mongoose.startSession();
@@ -81,7 +135,7 @@ export class RouteService {
         }
       }
 
-    async getRouteById(RouteId: string) {
+    async getRouteById(RouteId : string) {
         try {
             const route = await Route.findById(RouteId)
             if (!Route) throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('This Route'))

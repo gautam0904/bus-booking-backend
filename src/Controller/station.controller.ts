@@ -10,7 +10,7 @@ import { Auth } from "../Middleware/auth.middleware";
 import { Role } from "../Middleware/role.middleware";
 import { StationService } from "../Service";
 
-@controller('/station')
+@controller('/station' , new Auth().handler)
 
 export class StationController {
   private stationService: StationService;
@@ -20,7 +20,7 @@ export class StationController {
 
   }
 
-  @httpPost('/create')
+  @httpPost('/create' , new Role().handler)
   async create(req: Request, res: Response) {
     try {
 
@@ -34,7 +34,7 @@ export class StationController {
     }
   }
 
-  @httpDelete('/delete/:id?')
+  @httpDelete('/delete/:id?', new Role().handler)
   async delete(req: Request, res: Response) {
       try {
           const stationId = req.params.id;
@@ -51,7 +51,7 @@ export class StationController {
   }
 
   
-  @httpPut('/update/:id?', new Auth().handler, new Role().handler)
+  @httpPut('/update/:id?', new Role().handler)
   async update(req: Request, res: Response) {
     try {
 
@@ -67,7 +67,7 @@ export class StationController {
     }
   }
 
-  @httpGet('/getAll', new Auth().handler)
+  @httpGet('/getAll', new Role().handler)
   async getAll(req: Request, res: Response) {
     try {
       const allstations = await this.stationService.getAllStation();

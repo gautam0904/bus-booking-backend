@@ -129,7 +129,6 @@ export class UserService {
         session.startTransaction();
 
         try {
-            console.log(userId , userOwnId);
           const opts = { session };
 
 

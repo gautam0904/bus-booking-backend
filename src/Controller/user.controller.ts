@@ -67,11 +67,11 @@ export class UserController {
     }
   }
 
-  @httpDelete('/delete/:id?')
+  @httpDelete('/delete/:id?' , new Auth().handler , new Role().handler)
   async delete(req: Request, res: Response) {
       try {
           const userId = req.params.id;
-          const userOwnId : string = req.headers.USERID as string;
+          const userOwnId : string = req.headers.USERID as string
           if (!userId) {
               throw new ApiError(StatusCode.NOTACCEPTABLE, errMSG.EXSISTUSER);
           }

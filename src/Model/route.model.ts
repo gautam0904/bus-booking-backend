@@ -1,28 +1,26 @@
 import mongoose from "mongoose";
-import { errMSG } from "../Constant/message";
 
 
 const routeSchema = new mongoose.Schema({
 
     routeName: {
         type: String,
-        required: [true, errMSG.REQUIRED('Route name')]
+        required: [true, 'Route name is required']
     },
     stations: [{
-        previousStation: {
-            type: mongoose.Types.ObjectId,
-            ref : "Station",
-            required: [true, errMSG.REQUIRED('Previous station')]
+        station: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Station',
+            required: [true, 'Station reference is required']
         },
-        currentStation: {
-            type: mongoose.Types.ObjectId,
-            ref : "Station",
-            required: [true, errMSG.REQUIRED('Current station')]
-        },
-        distance: {
+        order: {
             type: Number,
-            required: [true, errMSG.REQUIRED('Distance')]
+            required: [true, 'Order is required']
         },
+        distanceFromStart: {
+            type: Number,
+            required: [true, 'Distance from start is required']
+        }
     }]
 }, { timestamps: true });
 

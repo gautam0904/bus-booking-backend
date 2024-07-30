@@ -10,8 +10,8 @@ export class Role extends BaseMiddleware{
         try {
             
             const permissions = {
-                admin : ['/buses/get' , '/buses/create' , '/buses/update', '/buses/delete' ,'/user/get'],
-                user : ['/buses/get' , '/bus/bookedSeat/' , '/bus/book/'],
+                admin : ['/buses/get' , '/buses/create' , '/buses/update', '/buses/delete' ,'/user/get','/user/delete','/station/getAll' , '/station/create' , '/station/update', '/station/delete'],
+                user : ['/buses/get' , '/bus/bookedSeat/' , '/bus/book/','/station/getAll'],
             }
 
             const role = req.headers.ROLE?.toString() ;
@@ -32,7 +32,7 @@ export class Role extends BaseMiddleware{
             
             next()
 
-        } catch (error ) {
+        } catch (error ) {            
             res.status(error.statuscode || StatusCode.INTERNALSERVERERROR).json({
                 message : error.message || errMSG.DEFAULTERRORMSG
             })

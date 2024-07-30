@@ -12,7 +12,7 @@ import { Role } from "../Middleware/role.middleware";
 
 @controller('/route')
 
-export class RouterController {
+export class RouteController {
   private routeService: RouteService;
 
   constructor(@inject(Types.RouteService) routeServices: RouteService) {

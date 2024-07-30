@@ -174,7 +174,7 @@ export class StationService {
                 },
                 {
                     $sort: {
-                        createdAt: -1
+                        station: 1
                     }
                 }
             ]);
