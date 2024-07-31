@@ -1,5 +1,6 @@
 export interface Ifilter {
     departure: string;
     destination: string;
-    date : Date
+    date : Date;
+    station ?: string
 }

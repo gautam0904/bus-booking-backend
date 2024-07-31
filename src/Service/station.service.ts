@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose, { ClientSession } from "mongoose";
 import Bus from "../Model/bus.model";
+import { Ifilter } from "../Interface/ifilter.interface";
 
 @injectable()
 export class StationService {
@@ -161,10 +162,36 @@ export class StationService {
 
         } catch (error) {
             return {
-                message: error.message || errMSG.DEFAULTERRORMSG,
+                statuscode: error.statuscode || StatusCode.INTERNALSERVERERROR,
+                content : {
+                    message: error.message || errMSG.DEFAULTERRORMSG,
+                }
             }
         }
     }
+
+    async getFilteredStation(filter: Ifilter | null = null) {
+        try {            
+            const station = await Station.findOne({station : filter?.station})
+
+            if (!station) {
+                throw new ApiError(StatusCode.NOTFOUND, `${errMSG.NOTFOUND('Station')}`);
+            }
+            return {
+                statuscode: StatusCode.OK,
+                content: {
+                    message: MSG.SUCCESS('Station get '),
+                    data: station
+                },
+            };
+        } catch (error) {
+            return {
+                statuscode: error.statusCode || StatusCode.NOTIMPLEMENTED,
+                content: { message: error.message },
+            };
+        }
+    }
+
 
     async getAllStation() {
         try {
@@ -231,6 +258,4 @@ export class StationService {
             };
         }
     }
-
-
 }

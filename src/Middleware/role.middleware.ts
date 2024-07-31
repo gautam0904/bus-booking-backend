@@ -10,8 +10,8 @@ export class Role extends BaseMiddleware{
         try {
             
             const permissions = {
-                admin : ['/buses/get' , '/buses/create' , '/buses/update', '/buses/delete' ,'/user/get','/user/delete','/station/getAll' , '/station/create' , '/station/update', '/station/delete'],
-                user : ['/buses/get' , '/bus/bookedSeat/' , '/bus/book/','/station/getAll'],
+                admin : ['/buses/get' , '/buses/create' , '/buses/update', '/buses/delete' ,'/user/get','/user/delete','/station/getAll' , '/station/create' , '/station/update', '/station/delete' ,  '/station/getByName' , '/station/get'],
+                user : ['/buses/get' , '/bus/bookedSeat/' , '/bus/book/','/station/getAll' , '/station/getByName' , '/station/get'],
             }
 
             const role = req.headers.ROLE?.toString() ;

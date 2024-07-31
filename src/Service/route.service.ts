@@ -21,9 +21,10 @@ export class RouteService {
             if (existRoute) {
                 throw new ApiError(StatusCode.CONFLICT, errMSG.EXSIT('This route'))
             }
-
+            console.log(RouteData);
+            
             const result = await Route.create({
-                routename: RouteData.routeName,
+                routeName: RouteData.routeName,
                 stations: RouteData.stations,
             });
             await this.generateSegments(result._id.toString());
@@ -37,7 +38,7 @@ export class RouteService {
         } catch (error) {
    
             return {
-                statusCode: StatusCode.OK,
+                statusCode: error.statuscode || StatusCode.INTERNALSERVERERROR,
                 content: {
                     message: error.message || errMSG.INTERNALSERVERERRORRESULT,
                 }

@@ -9,6 +9,7 @@ import { ApiError } from "../Utils/ApiError";
 import { Auth } from "../Middleware/auth.middleware";
 import { Role } from "../Middleware/role.middleware";
 import { StationService } from "../Service";
+import { Ifilter } from "../Interface/ifilter.interface";
 
 @controller('/station' , new Auth().handler)
 
@@ -73,6 +74,35 @@ export class StationController {
       const allstations = await this.stationService.getAllStation();
 
       res.status(allstations.statuscode).json(allstations.content);
+    } catch (error) {
+      res.status(error.statuscode || StatusCode.NOTIMPLEMENTED).json({ message: error.message || errMSG.INTERNALSERVERERRORRESULT });
+    }
+  }
+
+  @httpGet('/get/:id?' , new Role().handler)
+  async getById(req : Request , res : Response){
+    try {
+      const stationId = req.params.id as string
+
+      const get_station = await this.stationService.getStationById(stationId);
+
+      res.status(get_station.statuscode).json(get_station.content)
+
+    } catch (error) {
+      res.status(error.statuscode || StatusCode.NOTIMPLEMENTED).json({ message: error.message || errMSG.INTERNALSERVERERRORRESULT });
+    }
+  }
+
+  @httpGet('/getByName', new Role().handler)
+  async getFilter(req: Request, res: Response) {
+    try {
+
+      const filter = {
+        station : req.query.station,
+      }
+        const allBus = await this.stationService.getFilteredStation(filter as Ifilter);
+
+      res.status(allBus.statuscode).json(allBus.content);
     } catch (error) {
       res.status(error.statuscode || StatusCode.NOTIMPLEMENTED).json({ message: error.message || errMSG.INTERNALSERVERERRORRESULT });
     }

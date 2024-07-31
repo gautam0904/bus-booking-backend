@@ -20,7 +20,7 @@ export class RouteController {
 
   }
 
-  @httpPost('/cretae')
+  @httpPost('/create')
   async signup(req: Request, res: Response) {
     try {
 
