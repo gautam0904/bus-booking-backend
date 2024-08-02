@@ -6,13 +6,14 @@ const busSchema = new mongoose.Schema({
     busNumber : {
         type : String,
         required : [true , errMSG.REQUIRED('Bus number')],
+        unique: true
     },
     departure :{
         type : String,
         required : [true , errMSG.REQUIRED('Bus departure')],
     },
     departureTime :{
-        type : String,
+        type : Date,
         required : [true , errMSG.REQUIRED('Bus departure')],
     },
     destination :{

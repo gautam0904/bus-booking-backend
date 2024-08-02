@@ -21,13 +21,16 @@ export class RouteService {
             if (existRoute) {
                 throw new ApiError(StatusCode.CONFLICT, errMSG.EXSIT('This route'))
             }
-            console.log(RouteData);
             
             const result = await Route.create({
                 routeName: RouteData.routeName,
                 stations: RouteData.stations,
             });
-            await this.generateSegments(result._id.toString());
+            const segmentResult  = await this.generateSegments(result._id.toString());
+
+            if (segmentResult instanceof ApiError || segmentResult instanceof Error) {
+                throw segmentResult; 
+            }
             return {
                 statusCode: StatusCode.OK,
                 content: {
@@ -46,54 +49,52 @@ export class RouteService {
         }
     }
 
-       async generateSegments (routeId : string)  {
+    async generateSegments(routeId : string) {
         try {
-
             const route = await Route.findById(routeId).populate('stations.station').exec();
             
             if (!route) {
-                throw new ApiError(StatusCode.NOTFOUND , 'Route not found');
+                throw new ApiError(StatusCode.NOTFOUND, 'Route not found');
             }
-            
-            route.stations.sort((a, b) => a.order - b.order);
-            
+              
             const segments = [];
-  
+    
             for (let i = 0; i < route.stations.length; i++) {
                 for (let j = i + 1; j < route.stations.length; j++) {
                     const startStation = route.stations[i];
                     const endStation = route.stations[j];
                     
                     const segment = {
-                        routeId  : new mongoose.Types.ObjectId(routeId),
-                        fromStation: startStation.station,
-                        toStation: endStation.station,
+                        routeId: new mongoose.Types.ObjectId(routeId),
+                        fromStation: startStation.station._id,
+                        toStation: endStation.station._id,
                         distance: endStation.distanceFromStart - startStation.distanceFromStart
                     };
-                    
                     segments.push(segment);
                 }
             }
             
             const segmentPromises = segments.map(async (s) => {
-                
-               
-                const rs = await Segment.create({
-                    fromStation : s.fromStation,
-                    toStation : s.toStation,
-                    distance : s.distance
-                })
-                return rs
+                try {
+                    const rs = await Segment.create({
+                        routeId ,
+                        fromStation: s.fromStation,
+                        toStation: s.toStation,
+                        distance: s.distance
+                    });
+                    return rs;
+                } catch (error) {
+                    return error
+                }
             });
     
-            await Promise.all(segmentPromises);
-
-            console.log('Generated segments:', segments);
+            const createdSegments = await Promise.all(segmentPromises);
+                
             return segments;
         } catch (err) {
             return err;
         }
-    };
+    }
     
 
     
@@ -115,6 +116,7 @@ export class RouteService {
           const deletedRoute = await Route.findOneAndDelete({ _id: RouteId },opts);
 
           await Bus.deleteMany({route : RouteId})
+          await Segment.deleteMany({ routeId: RouteId })
 
           await session.commitTransaction();
 
@@ -161,14 +163,59 @@ export class RouteService {
         try {
             const Routes = await Route.aggregate([
                 {
-                    $match: {},
+                  "$match": {
+                    
+                  }
                 },
                 {
-                    $sort: {
-                        createdAt: -1
+                  "$lookup": {
+                    "from": "stations",
+                    "localField": "stations.station",  
+                    "foreignField": "_id",  
+                    "as": "stationDetails"  
+                  }
+                },
+                {
+                  "$addFields": {
+                    "stations": {
+                      "$map": {
+                        "input": "$stations",
+                        "as": "station",
+                        "in": {
+                          "order": "$$station.order",
+                          "distanceFromStart": "$$station.distanceFromStart",
+                          "_id": "$$station._id",
+                          "stationName": {
+                            "$let": {
+                              "vars": {
+                                "stationDetail": {
+                                  "$arrayElemAt": [
+                                    {
+                                      "$filter": {
+                                        "input": "$stationDetails",
+                                        "as": "detail",
+                                        "cond": { "$eq": ["$$detail._id", "$$station.station"] }
+                                      }
+                                    },
+                                    0
+                                  ]
+                                }
+                              },
+                              "in": { "$ifNull": ["$$stationDetail.station", "Unknown"] }
+                            }
+                          }
+                        }
+                      }
                     }
+                  }
+                },
+                {
+                  "$project": {
+                    "stationDetails": 0
+                  }
                 }
-            ]);
+              ]
+              );
             if (Routes) {
                 return {
                     statuscode: StatusCode.OK,

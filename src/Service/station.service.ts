@@ -149,13 +149,13 @@ export class StationService {
     async getStationById(StationId: string) {
         try {
             const station = await Station.findById(StationId)
-            if (!Station) throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('This Station'))
+            if (!station) throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('This Station'))
 
             return {
                 statuscode: StatusCode.OK,
                 content: {
                     message: MSG.SUCCESS('Station get '),
-                    data: Station
+                    data: station
                 },
             }
 

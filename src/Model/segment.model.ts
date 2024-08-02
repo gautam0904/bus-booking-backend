@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 
 const segmentSchema = new mongoose.Schema({
-   Id : {
+   routeId : {
         type : mongoose.Types.ObjectId,
         ref: 'Route',
         required: [true, 'Route reference is required']

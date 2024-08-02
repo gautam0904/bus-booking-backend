@@ -21,7 +21,7 @@ export class RouteController {
   }
 
   @httpPost('/create')
-  async signup(req: Request, res: Response) {
+  async create(req: Request, res: Response) {
     try {
 
       const routeData: Iroute = req.body as unknown as Iroute;
