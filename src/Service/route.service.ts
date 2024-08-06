@@ -66,8 +66,8 @@ export class RouteService {
                     
                     const segment = {
                         routeId: new mongoose.Types.ObjectId(routeId),
-                        fromStation: startStation.station._id,
-                        toStation: endStation.station._id,
+                        fromStation: new mongoose.Types.ObjectId(startStation.station._id),
+                        toStation: new mongoose.Types.ObjectId(endStation.station._id),
                         distance: endStation.distanceFromStart - startStation.distanceFromStart
                     };
                     segments.push(segment);
@@ -88,17 +88,13 @@ export class RouteService {
                 }
             });
     
-            const createdSegments = await Promise.all(segmentPromises);
+             await Promise.all(segmentPromises);
                 
             return segments;
         } catch (err) {
             return err;
         }
     }
-    
-
-    
-    
       async deleteRoute(RouteId: string ) {
         const session = await mongoose.startSession();
 

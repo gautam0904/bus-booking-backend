@@ -13,7 +13,7 @@ const busSchema = new mongoose.Schema({
         required : [true , errMSG.REQUIRED('Bus departure')],
     },
     departureTime :{
-        type : Date,
+        type : String,
         required : [true , errMSG.REQUIRED('Bus departure')],
     },
     destination :{
@@ -38,7 +38,7 @@ const busSchema = new mongoose.Schema({
         required : [true , errMSG.REQUIRED('Route id')]
     } ,
     stops : [{
-        Station :{
+        station :{
             type : mongoose.Types.ObjectId,
             ref : 'Station',
             required : [true , errMSG.REQUIRED('Station id')]
@@ -46,6 +46,10 @@ const busSchema = new mongoose.Schema({
         distance : {
             type : Number,
             required : [true , errMSG.REQUIRED('Distance')]
+        },
+        arrivalTime :{
+            type : String,
+            required : [true , errMSG.REQUIRED('Arrival time')]
         }
     }]
 },{timestamps : true});

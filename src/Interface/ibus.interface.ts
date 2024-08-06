@@ -13,5 +13,6 @@ export interface IBus{
    stops : [{
     station : string;
     distance : number;
+    arrivalTime : string
    }]
 }

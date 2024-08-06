@@ -4,8 +4,6 @@ import Station from "../Model/station.model";
 import { ApiError } from "../Utils/ApiError";
 import { StatusCode } from "../Constant/statuscode";
 import { errMSG, MSG } from "../Constant/message";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import mongoose, { ClientSession } from "mongoose";
 import Bus from "../Model/bus.model";
 import { Ifilter } from "../Interface/ifilter.interface";
@@ -148,6 +146,8 @@ export class StationService {
 
     async getStationById(StationId: string) {
         try {
+            console.log(StationId);
+            
             const station = await Station.findById(StationId)
             if (!station) throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('This Station'))
 
@@ -248,7 +248,10 @@ export class StationService {
 
             return {
                 statuscode: StatusCode.OK,
-                Content: result,
+                Content: {
+                    message : MSG.SUCCESS('station is updated'),
+                    data : result
+                },
             };
 
         } catch (error) {

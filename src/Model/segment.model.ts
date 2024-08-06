@@ -8,11 +8,11 @@ const segmentSchema = new mongoose.Schema({
         required: [true, 'Route reference is required']
     },
     fromStation: {
-        type: String,
+        type: mongoose.Types.ObjectId,
         required: [true, 'Route name is required']
     },
     toStation: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Types.ObjectId,
         ref: 'Station',
         required: [true, 'Station reference is required']
     },

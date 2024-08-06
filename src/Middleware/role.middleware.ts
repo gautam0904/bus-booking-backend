@@ -10,7 +10,7 @@ export class Role extends BaseMiddleware{
         try {
             
             const permissions = {
-                admin : ['/buses/get' , '/buses/create' , '/buses/update', '/buses/delete' ,'/user/get','/user/delete','/station/getAll' , '/station/create' , '/station/update', '/station/delete' ,  '/station/getByName' , '/station/get'],
+                admin : ['/buses/get' , '/buses/create' , '/buses/update', '/buses/delete' ,'/user/get','/user/delete','/station/getAll' , '/station/create' , '/station/update', '/station/delete' ,  '/station/getByName' , '/station/get' , '/bus/bookedSeat'],
                 user : ['/buses/get' , '/bus/bookedSeat/' , '/bus/book/','/station/getAll' , '/station/getByName' , '/station/get'],
             }
 
