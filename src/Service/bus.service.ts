@@ -20,10 +20,19 @@ export class BusService {
 
     }
 
+     convertTimeToDate(timeString: string, baseDate: Date): Date {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      const date = new Date(baseDate);
+      date.setHours(hours, minutes, 0, 0);
+      return date;
+  }
+
+   calculateTravelTime(distance: number, speed: number): number {
+      return (distance / speed) * 3600 * 1000;
+  }
+
     async createBus(BusData: IBus) {
         try {
-            console.log(BusData);
-            
             const existBus = await Bus.findOne({
                 departure: BusData.departure,
                 destination: BusData.destination,
@@ -36,21 +45,9 @@ export class BusService {
 
             const newstops = [];
             const speed = 60;
-
-            function convertTimeToDate(timeString: string, baseDate: Date): Date {
-                const [hours, minutes] = timeString.split(':').map(Number);
-                const date = new Date(baseDate);
-                date.setHours(hours, minutes, 0, 0);
-                return date;
-            }
-
-            function calculateTravelTime(distance: number, speed: number): number {
-                return (distance / speed) * 3600 * 1000;
-            }
-
             const baseDate = new Date();
 
-            let currentArrivalTime = convertTimeToDate(BusData.departureTime, baseDate);
+            let currentArrivalTime = this.convertTimeToDate(BusData.departureTime, baseDate);
 
             for (let i = 0; i < BusData.stops.length; i++) {
                 let tempstation = {
@@ -58,10 +55,9 @@ export class BusService {
                     distance: 0,
                     arrivalTime: ''
                 };
+                const travelTime = this.calculateTravelTime(BusData.stops[i].distance, speed);
 
-                const travelTime = calculateTravelTime(BusData.stops[i].distance, speed);
-
-                currentArrivalTime = new Date(currentArrivalTime.getTime() + travelTime);
+                currentArrivalTime = new Date(this.convertTimeToDate(BusData.departureTime, baseDate).getTime() + travelTime);
 
 
                 const hours = currentArrivalTime.getHours().toString().padStart(2, '0');
@@ -167,7 +163,53 @@ export class BusService {
 
     async getAll() {
         try {
-            const getBus = await Bus.find()
+            const getBus = await Bus.aggregate([
+                {
+                  '$match': {}
+                }, {
+                  '$lookup': {
+                    'from': 'stations', 
+                    'localField': 'stops.station', 
+                    'foreignField': '_id', 
+                    'as': 'stationDetails'
+                  }
+                }, {
+                  '$addFields': {
+                    'stops': {
+                      '$map': {
+                        'input': '$stops', 
+                        'as': 'stop', 
+                        'in': {
+                          'station': '$$stop.station', 
+                          'arrivalTime': '$$stop.arrivalTime', 
+                          'distance': '$$stop.distance', 
+                          'stationName': {
+                            '$arrayElemAt': [
+                              {
+                                '$map': {
+                                  'input': {
+                                    '$filter': {
+                                      'input': '$stationDetails', 
+                                      'as': 'detail', 
+                                      'cond': {
+                                        '$eq': [
+                                          '$$detail._id', '$$stop.station'
+                                        ]
+                                      }
+                                    }
+                                  }, 
+                                  'as': 'station', 
+                                  'in': '$$station.station'
+                                }
+                              }, 0
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ])
             if (!Bus) throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('Bus'))
             return {
                 statuscode: StatusCode.OK,
@@ -365,9 +407,7 @@ export class BusService {
                     data: busResult
                 },
             };
-        } catch (error) {
-            console.log(error);
-            
+        } catch (error) {            
             return {
                 statuscode: error.statusCode || StatusCode.NOTIMPLEMENTED,
                 content: { message: error.message },

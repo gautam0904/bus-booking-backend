@@ -13,8 +13,6 @@ export class BookedService {
     }
 
     async booking(SeatData: IbookedSeat, userId: string) {
-        console.log(SeatData);
-        
         try {
 
             if (!SeatData.isSingleLady) {
@@ -167,8 +165,6 @@ export class BookedService {
                 }
             };
         } catch (error) {
-            console.error(error);
-
             return {
                 statusCode: StatusCode.OK,
                 content: {
@@ -177,4 +173,6 @@ export class BookedService {
             };
         }
     }
+
+
 }

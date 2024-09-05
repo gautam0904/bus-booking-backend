@@ -7,6 +7,9 @@ import { errMSG, MSG } from "../Constant/message";
 import mongoose, { ClientSession } from "mongoose";
 import Bus from "../Model/bus.model";
 import { Ifilter } from "../Interface/ifilter.interface";
+import { IBus } from "../Interface/ibus.interface";
+import Route from "../Model/route.model";
+import { Iroute } from "../Interface/iroute.interface";
 
 @injectable()
 export class StationService {
@@ -62,7 +65,217 @@ export class StationService {
                 throw new ApiError(StatusCode.NOTFOUND, errMSG.NOTFOUND('Station'));
             }
 
-            const buses = await Bus.find({ 'stops.Station': stationId }).session(session);
+            const deleteBuses: IBus[] = await Bus.aggregate([
+                    {
+                      '$addFields': {
+                        'isStationFirstPresent': {
+                          '$first': '$stops'
+                        }
+                      }
+                    }, {
+                      '$addFields': {
+                        'isStationLastPresent': {
+                          '$last': '$stops'
+                        }
+                      }
+                    },
+                    {
+                        '$match': {
+                            '$or': [
+                                {
+                                    'isStationFirstPresent.station': new mongoose.Types.ObjectId(stationId)
+                                }, {
+                                    'isStationLastPresent.station': new mongoose.Types.ObjectId(stationId)
+                                }
+                            ]
+                        }
+                    }
+                  ])        
+
+            const deleteBusPromises = deleteBuses.map(async (b) => {
+                try {
+                    const rb = await Bus.findByIdAndDelete(
+                        {
+                            _id: new mongoose.Types.ObjectId(b._id),
+                        }
+                    );
+
+                    return rb;
+                } catch (error) {
+                    return error
+                }
+            });
+
+            await Promise.all(deleteBusPromises);
+
+            const updateBuses: IBus[] = await Bus.aggregate([
+                {
+                    '$addFields': {
+                        'isStationPresent': {
+                            '$cond': {
+                                'if': {
+                                    '$gt': [
+                                        {
+                                            '$size': {
+                                                '$filter': {
+                                                    'input': '$stops',
+                                                    'as': 'detail',
+                                                    'cond': {
+                                                        '$eq': [
+                                                            '$$detail.station', new mongoose.Types.ObjectId(stationId)
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }, 0
+                                    ]
+                                },
+                                'then': true,
+                                'else': false
+                            }
+                        }
+                    }
+                }, {
+                    '$match': {
+                        'isStationPresent': true
+                    }
+                }, {
+                    '$project': {
+                        'isStationPresent': 0
+                    }
+                }
+            ]);
+
+
+
+            const updateBusPromises = updateBuses.map(async (b) => {
+                try {
+
+                    const newStops = b.stops.filter(st => st.station != (new mongoose.Types.ObjectId(stationId).toString()));                  
+
+                    const rb = await Bus.findByIdAndUpdate(
+                        {
+                            _id: new mongoose.Types.ObjectId(b._id),
+                        },
+                        {
+                            $set: {
+                                stops: newStops
+                            },
+                        },
+                        { new: true }
+                    );
+
+                    return rb;
+                } catch (error) {
+                    return error
+                }
+            });
+
+            await Promise.all(updateBusPromises);
+
+            const deleteRoute: Iroute[] = await Route.aggregate([
+                {
+                    '$addFields': {
+                        'isStationFirstPresent': {
+                            '$first': '$stations'
+                        }
+                    }
+                }, {
+                    '$addFields': {
+                        'isStationLastPresent': {
+                            '$last': '$stations'
+                        }
+                    }
+                }, {
+                    '$match': {
+                        '$or': [
+                            {
+                                'isStationFirstPresent.station': new mongoose.Types.ObjectId(stationId)
+                            }, {
+                                'isStationLastPresent.station': new mongoose.Types.ObjectId(stationId)
+                            }
+                        ]
+                    }
+                }
+            ])
+
+            const deleteRoutePromise = deleteRoute.map(async (r) => {
+                try {
+                    const resultRoute = await Route.findByIdAndDelete(
+                        {
+                            _id: new mongoose.Types.ObjectId(r._id),
+                        }
+                    );
+
+                    return resultRoute;
+                } catch (error) {
+                    return error
+                }
+            });
+
+            await Promise.all(deleteRoutePromise);
+
+            const updateRoute: Iroute[] = await Route.aggregate([
+                {
+                    '$addFields': {
+                        'isStationPresent': {
+                            '$cond': {
+                                'if': {
+                                    '$gt': [
+                                        {
+                                            '$size': {
+                                                '$filter': {
+                                                    'input': '$stations',
+                                                    'as': 'detail',
+                                                    'cond': {
+                                                        '$eq': [
+                                                            '$$detail.station', new mongoose.Types.ObjectId(stationId)
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }, 0
+                                    ]
+                                },
+                                'then': true,
+                                'else': false
+                            }
+                        }
+                    }
+                }, {
+                    '$match': {
+                        'isStationPresent': true
+                    }
+                }, {
+                    '$project': {
+                        'isStationPresent': 0
+                    }
+                }
+            ])
+
+
+            const updateRoutePromises = updateRoute.map(async (r) => {
+                try {
+                    const newStations = r.stations.filter(st => st.station != (new mongoose.Types.ObjectId(stationId).toString()))
+                    const resultRoute = await Route.findByIdAndUpdate(
+                        {
+                            _id: new mongoose.Types.ObjectId(r._id),
+                        },
+                        {
+                            $set: {
+                                stations: newStations
+                            },
+                        },
+                        { new: true }
+                    );
+
+                    return resultRoute;
+                } catch (error) {
+                    return error
+                }
+            });
+
+            await Promise.all(updateRoutePromises);
 
             await session.commitTransaction();
 
@@ -85,69 +298,8 @@ export class StationService {
         }
     }
 
-
-
-    //   async deleteStation(stationId: string , StationOwnId: string) {
-    //     const session = await mongoose.startSession();
-
-    //     session.startTransaction();
-
-    //     try {
-    //       const opts = { session };
-
-
-    //       const existStation = await Station.findOne({ _id: stationId });
-    //       if (!existStation) {
-    //         throw new ApiError(StatusCode.NOTFOUND, errMSG.NOTFOUND('Staion'));
-    //       }
-
-    //       const deletedStation = await Station.findOneAndDelete({ _id: stationId },opts);
-
-    //       const buses = await Bus.find({
-    //         'stops.Station': stationId
-    //     });
-
-    //     for (const bus of buses) {
-    //         const updatedStops = bus.stops.filter(stop => stop.Station.toString() !== stationId.toString());
-    //         bus.stops = updatedStops;
-
-    //         // Save the updated bus
-    //         await bus.save();
-    //     }
-
-    //     for (const bus of buses) {
-    //         bus.stops = bus.stops.filter(stop => stop.Station !== stationId);
-
-    //         // Save the updated bus
-    //         await bus.save();
-    //     }
-
-    //       await session.commitTransaction();
-
-    //       return {
-    //         statuscode: StatusCode.OK,
-    //         content: {
-    //           message: MSG.SUCCESS('Station is deleted'),
-    //           data: deletedStation
-    //         }
-    //       };
-    //     } catch (error) {
-
-    //       await session.abortTransaction();
-
-    //       return {
-    //         statuscode: error.statusCode || StatusCode.NOTIMPLEMENTED,
-    //         content: { message: error.message },
-    //       };
-    //     } finally {
-    //       session.endSession();
-    //     }
-    //   }
-
     async getStationById(StationId: string) {
         try {
-            console.log(StationId);
-            
             const station = await Station.findById(StationId)
             if (!station) throw new ApiError(StatusCode.NOCONTENT, errMSG.NOTFOUND('This Station'))
 
@@ -163,7 +315,7 @@ export class StationService {
         } catch (error) {
             return {
                 statuscode: error.statuscode || StatusCode.INTERNALSERVERERROR,
-                content : {
+                content: {
                     message: error.message || errMSG.DEFAULTERRORMSG,
                 }
             }
@@ -171,8 +323,8 @@ export class StationService {
     }
 
     async getFilteredStation(filter: Ifilter | null = null) {
-        try {            
-            const station = await Station.findOne({station : filter?.station})
+        try {
+            const station = await Station.findOne({ station: filter?.station })
 
             if (!station) {
                 throw new ApiError(StatusCode.NOTFOUND, `${errMSG.NOTFOUND('Station')}`);
@@ -224,7 +376,7 @@ export class StationService {
         }
     }
 
-    async updateStation(updateData: Istation , id : string) {
+    async updateStation(updateData: Istation, id: string) {
         try {
 
             const existStation = await Station.findById(updateData._id);
@@ -249,8 +401,8 @@ export class StationService {
             return {
                 statuscode: StatusCode.OK,
                 Content: {
-                    message : MSG.SUCCESS('station is updated'),
-                    data : result
+                    message: MSG.SUCCESS('station is updated'),
+                    data: result
                 },
             };
 
