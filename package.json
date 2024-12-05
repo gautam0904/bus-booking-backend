@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+  "node": "16.x"
+},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./src/server.ts"
+    "build": "echo 'Starting npm install' && npm install --legacy-peer-deps && echo 'Starting TypeScript build' && tsc --outDir dist",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",
