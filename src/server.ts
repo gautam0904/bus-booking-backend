@@ -23,7 +23,7 @@ server.setConfig((app: express.Application) => {
 const app = server.build();
 
 connectDB().then(() => {
-    app.listen(process.env.port, () => {
+    app.listen((process.env.PORT || 3135 ), () => {
         console.log(MSG.SERVERLISTEN, process.env.port)
     })
 }).catch((e) => {
