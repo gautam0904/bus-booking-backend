@@ -14,6 +14,9 @@ const server = new InversifyExpressServer(container)
 server.setConfig((app: express.Application) => {
     app.use(express.json());
     app.use(express.static('public'));
+     const allowedOrigin = process.env.NODE_ENV === 'production' 
+        ? 'https://your-deployed-frontend-url.com' 
+        : 'http://localhost:4200'; 
     app.use(cors({
         origin: allowedOrigin,
         methods: ['GET', 'POST', 'OPTIONS'],
