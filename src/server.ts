@@ -15,7 +15,7 @@ server.setConfig((app: express.Application) => {
     app.use(express.json());
     app.use(express.static('public'));
     app.use(cors({
-        origin: 'http://localhost:4200',
+        origin: allowedOrigin,
         methods: ['GET', 'POST', 'OPTIONS'],
         allowedHeaders: ['Authorization', 'Content-Type'],
         credentials: true
